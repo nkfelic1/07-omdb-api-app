@@ -37,15 +37,34 @@ searchForm.addEventListener('submit', (event) => {
 async function fetchMovies(query) {
 	const url = `${API_URL}?apikey=${API_KEY}&s=${encodeURIComponent(query)}&type=movie`;
 
-	// Using async/await as requested. No try/catch is used (following instructions).
-	const response = await fetch(url);
-	const data = await response.json();
+	// Check HTTP status and catch network/parsing errors.
+	try {
+		const response = await fetch(url);
 
-	// OMDb returns Response: "True" when there are results
-	if (data.Response === 'True' && Array.isArray(data.Search)) {
-		renderMovies(data.Search);
-	} else {
-		resultsGrid.innerHTML = `<div class="no-results">No results found for "${escapeHtml(query)}".</div>`;
+		// If server returned a non-2xx status, log details and show a friendly error.
+		if (!response.ok) {
+			console.error('OMDb API HTTP error', {
+				status: response.status,
+				statusText: response.statusText,
+				url,
+			});
+			resultsGrid.innerHTML = '<div class="no-results">Sorry, something went wrong while fetching results. Please try again later.</div>';
+			return;
+		}
+
+		const data = await response.json();
+
+		// OMDb returns Response: "True" when there are results
+		if (data.Response === 'True' && Array.isArray(data.Search)) {
+			renderMovies(data.Search);
+		} else {
+			// API responded successfully but no matches were found
+			resultsGrid.innerHTML = `<div class="no-results">No results found for "${escapeHtml(query)}".</div>`;
+		}
+	} catch (err) {
+		// Network error or JSON parsing error
+		console.error('Error fetching or parsing OMDb response', { error: err, url });
+		resultsGrid.innerHTML = '<div class="no-results">Network error. Please check your connection and try again.</div>';
 	}
 }
 
