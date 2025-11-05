@@ -46,6 +46,24 @@
     <p>Powered by <a href="https://www.omdbapi.com/" target="_blank">OMDB API</a></p>
   </footer>
 
+  <!-- Modal for movie details -->
+  <div id="modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button id="modal-close" class="modal-close" aria-label="Close details">&times;</button>
+      <div class="modal-body">
+        <img id="modal-poster" class="modal-poster" src="" alt="Movie poster">
+        <div class="modal-details">
+          <h3 id="modal-title"></h3>
+          <p id="modal-year-rating" class="muted"></p>
+          <p id="modal-genre"></p>
+          <p id="modal-director"></p>
+          <p id="modal-actors"></p>
+          <p id="modal-plot"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 

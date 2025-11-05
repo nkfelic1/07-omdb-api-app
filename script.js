@@ -87,6 +87,13 @@ function renderMovies(movies) {
 			</div>
 		`;
 
+		// Details button (left side)
+		const detailsBtn = document.createElement('button');
+		detailsBtn.className = 'details-btn';
+		detailsBtn.textContent = 'Details';
+		detailsBtn.addEventListener('click', () => openDetailsModal(movie.imdbID));
+		card.appendChild(detailsBtn);
+
 		// Add 'Add to Watchlist' button and wire it to add the movie
 		const infoDiv = card.querySelector('.movie-info');
 		const addBtn = document.createElement('button');
@@ -104,6 +111,82 @@ function renderMovies(movies) {
 
 		resultsGrid.appendChild(card);
 	});
+}
+
+// Fetch full movie details by imdbID and return data or null on error
+async function fetchMovieDetails(imdbID) {
+	const url = `${API_URL}?apikey=${API_KEY}&i=${encodeURIComponent(imdbID)}&plot=full`;
+	try {
+		const response = await fetch(url);
+		if (!response.ok) {
+			console.error('OMDb details HTTP error', { status: response.status, statusText: response.statusText, url });
+			return null;
+		}
+		const data = await response.json();
+		if (data.Response === 'True') return data;
+		console.error('OMDb details error response', { data, url });
+		return null;
+	} catch (err) {
+		console.error('Error fetching OMDb details', { error: err, imdbID });
+		return null;
+	}
+}
+
+// Modal helper functions
+const modal = document.getElementById('modal');
+const modalClose = document.getElementById('modal-close');
+const modalPoster = document.getElementById('modal-poster');
+const modalTitle = document.getElementById('modal-title');
+const modalYearRating = document.getElementById('modal-year-rating');
+const modalGenre = document.getElementById('modal-genre');
+const modalDirector = document.getElementById('modal-director');
+const modalActors = document.getElementById('modal-actors');
+const modalPlot = document.getElementById('modal-plot');
+
+function showModal() {
+	modal.classList.add('show');
+	modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal() {
+	modal.classList.remove('show');
+	modal.setAttribute('aria-hidden', 'true');
+}
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+	if (e.target === modal) closeModal();
+});
+
+// Open the modal and populate with fetched details
+async function openDetailsModal(imdbID) {
+	// Clear previous content
+	modalPoster.src = '';
+	modalTitle.textContent = 'Loading...';
+	modalYearRating.textContent = '';
+	modalGenre.textContent = '';
+	modalDirector.textContent = '';
+	modalActors.textContent = '';
+	modalPlot.textContent = '';
+
+	showModal();
+
+	const data = await fetchMovieDetails(imdbID);
+	if (!data) {
+		modalTitle.textContent = 'Details not available';
+		modalPlot.textContent = 'Could not load details. Please try again later.';
+		return;
+	}
+
+	const poster = data.Poster !== 'N/A' ? data.Poster : 'https://via.placeholder.com/300x450?text=No+Image';
+	modalPoster.src = poster;
+	modalPoster.alt = `${escapeHtml(data.Title)} poster`;
+	modalTitle.textContent = data.Title || '';
+	modalYearRating.textContent = `${data.Year || ''} • Rating: ${data.imdbRating || 'N/A'}`;
+	modalGenre.textContent = `Genre: ${data.Genre || 'N/A'}`;
+	modalDirector.textContent = `Director: ${data.Director || 'N/A'}`;
+	modalActors.textContent = `Cast: ${data.Actors || 'N/A'}`;
+	modalPlot.textContent = data.Plot || '';
 }
 
 // Add a movie to the watchlist (no duplicates)
@@ -170,6 +253,13 @@ function renderWatchlist() {
 				<div class="movie-year">${escapeHtml(movie.Year)}</div>
 			</div>
 		`;
+
+		// Details button (left side) for watchlist items
+		const detailsBtn = document.createElement('button');
+		detailsBtn.className = 'details-btn';
+		detailsBtn.textContent = 'Details';
+		detailsBtn.addEventListener('click', () => openDetailsModal(movie.imdbID));
+		card.appendChild(detailsBtn);
 
 		// Remove button
 		const infoDiv = card.querySelector('.movie-info');
